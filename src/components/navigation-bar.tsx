@@ -16,7 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ModernButton } from "@/components/shared";
-import { ChevronDown, Menu, ChevronRight, X } from "lucide-react";
+import { ChevronDown, Menu, ChevronRight } from "lucide-react";
 import navListData from "@/lib/nav-data";
 
 export default function NavigationBar() {
@@ -171,23 +171,14 @@ export default function NavigationBar() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-white/95 backdrop-blur-md">
                 <SheetHeader className="border-b border-gray-200/50 pb-4">
-                  <div className="flex items-center justify-between">
-                    <SheetTitle className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">FF</span>
-                      </div>
-                      <span className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                        Fit Formula
-                      </span>
-                    </SheetTitle>
-                    <ModernButton
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <X className="h-5 w-5" />
-                    </ModernButton>
-                  </div>
+                  <SheetTitle className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">FF</span>
+                    </div>
+                    <span className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                      Fit Formula
+                    </span>
+                  </SheetTitle>
                 </SheetHeader>
                 <div className="mt-6">
                   <MobileNavItems />
