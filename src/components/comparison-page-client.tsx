@@ -2,13 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { Nutrition } from "@/lib/nutritions";
+import { getAllArticles } from "@/lib/articles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ModernButton } from "@/components/shared";
-import { Badge } from "@/components/ui/badge";
-import { Search, Plus, X, ExternalLink, Scale, Target, BarChart3, Info } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
+import { Search, ChevronLeft, ChevronRight, ExternalLink, Scale, BarChart3, Info, X } from "lucide-react";
 import Link from "next/link";
-import { getAllArticles } from "@/lib/articles";
 
 interface ComparisonPageClientProps {
   nutritions: Nutrition[];
@@ -18,6 +18,7 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGroceries, setSelectedGroceries] = useState<Nutrition[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
   const itemsPerPage = 10;
 
   // Get articles data for linking
@@ -49,9 +50,14 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
   const currentGroceries = filteredGroceries.slice(startIndex, endIndex);
 
   // Reset to first page when search term changes
-  const handleSearchChange = (value: string) => {
+  const handleSearchChange = async (value: string) => {
+    setIsSearching(true);
     setSearchTerm(value);
     setCurrentPage(1);
+    
+    // Simulate search delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setIsSearching(false);
   };
 
   // Add grocery to comparison
@@ -72,42 +78,33 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Left Side - Searchable Grocery List */}
-          <div className="space-y-8">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Scale className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                  Uporedi Nutritivne Vrednosti
-                </h1>
-              </div>
-              <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
-                <p>
-                  Pronađite namirnice u listi sa leve strane i dodajte ih u tabelu za poređenje. 
-                  Možete dodati maksimalno 5 namirnica za poređenje njihovih nutritivnih vrednosti.
-                </p>
-                <p>
-                  Klikom na dugme &ldquo;Dodaj&rdquo; dodajte namirnicu u tabelu za poređenje. 
-                  Klikom na dugme &ldquo;Pročitaj&rdquo; možete pristupiti detaljnim člancima o namirnicama.
-                </p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-6">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <Scale className="h-6 w-6 text-white" />
             </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              Uporedi Namirnice
+            </h1>
+          </div>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Uporedite nutritivne vrednosti različitih namirnica i pronađite najbolje opcije za vašu ishranu
+          </p>
+        </div>
 
-            {/* Searchable Grocery List */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Left Side - Search and Selection */}
+          <div className="space-y-6">
             <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-              <CardHeader>
+              <CardHeader className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg flex items-center justify-center">
-                    <Target className="h-5 w-5 text-blue-600" />
+                    <Search className="h-5 w-5 text-blue-600" />
                   </div>
-                  <div>
-                    <CardTitle className="text-gray-900">Pretraga namirnica</CardTitle>
-                  </div>
+                  <CardTitle className="text-gray-900">Pretražite namirnice</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -120,8 +117,13 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
                     onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
+                  {isSearching && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Loading size="sm" variant="spinner" />
+                    </div>
+                  )}
                 </div>
-
+                
                 {/* Results Info */}
                 <div className="flex justify-between items-center text-sm text-gray-600">
                   <span>
@@ -134,47 +136,48 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
                   )}
                 </div>
 
-                {/* Grocery List */}
+                {/* Groceries List */}
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {currentGroceries.map((item) => (
-                    <Card 
-                      key={item.id} 
-                      className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 border-gray-200 hover:border-blue-300 bg-white/60 backdrop-blur-sm"
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {item.calories} kcal • {item.protein}g proteina • {item.carbohydrates}g ugljenih hidrata • {item.fats}g masti
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-700 border border-blue-200">
-                              {item.macronutrient}
-                            </span>
-                            {findArticleForNutrition(item.name) && (
-                              <Link href={createArticleUrl(findArticleForNutrition(item.name)!)}>
-                                <ModernButton variant="outline" size="sm">
-                                  <ExternalLink className="h-4 w-4 mr-1" />
-                                  Pročitaj
+                  {isSearching ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loading size="md" variant="dots" text="Pretražujem..." />
+                    </div>
+                  ) : currentGroceries.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">Nema rezultata za vašu pretragu</p>
+                    </div>
+                  ) : (
+                    currentGroceries.map((item) => (
+                      <Card 
+                        key={item.id} 
+                        className="cursor-pointer hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-200 border-gray-200 hover:border-blue-300 bg-white/60 backdrop-blur-sm"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-center">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                              <p className="text-sm text-gray-600">
+                                {item.calories} kcal • {item.protein}g proteina • {item.carbohydrates}g ugljenih hidrata • {item.fats}g masti
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-700 border border-blue-200">
+                                {item.macronutrient}
+                              </span>
+                                                              <ModernButton
+                                  onClick={() => addToComparison(item)}
+                                  disabled={selectedGroceries.length >= 5 || selectedGroceries.find(g => g.id === item.id) !== undefined}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  Dodaj
                                 </ModernButton>
-                              </Link>
-                            )}
-                            <ModernButton
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addToComparison(item)}
-                              disabled={selectedGroceries.length >= 5 || selectedGroceries.find(g => g.id === item.id) !== undefined}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Dodaj
-                            </ModernButton>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
 
                 {/* Pagination */}
@@ -190,6 +193,7 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
                         onClick={() => setCurrentPage(currentPage - 1)}
                         disabled={currentPage === 1}
                       >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
                         Prethodna
                       </ModernButton>
                       <div className="flex items-center space-x-1">
@@ -212,6 +216,7 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
                         disabled={currentPage === totalPages}
                       >
                         Sledeća
+                        <ChevronRight className="h-4 w-4 ml-1" />
                       </ModernButton>
                     </div>
                   </div>
@@ -221,100 +226,75 @@ export default function ComparisonPageClient({ nutritions }: ComparisonPageClien
           </div>
 
           {/* Right Side - Comparison Table */}
-          <div className="space-y-8">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                    Tabela za poređenje
-                  </h2>
-                  <p className="text-gray-600 mt-2">
-                    Dodajte namirnice sa leve strane da biste uporedili njihove nutritivne vrednosti.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Comparison Table */}
+          <div className="space-y-6">
             <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-              <CardHeader>
+              <CardHeader className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg flex items-center justify-center">
-                      <Info className="h-5 w-5 text-blue-600" />
+                      <BarChart3 className="h-5 w-5 text-blue-600" />
                     </div>
-                    <div>
-                      <CardTitle className="text-gray-900">
-                        Poređenje namirnica ({selectedGroceries.length}/5)
-                      </CardTitle>
-                    </div>
+                    <CardTitle className="text-gray-900">Uporedna tabela</CardTitle>
                   </div>
                   {selectedGroceries.length > 0 && (
-                    <ModernButton variant="outline" size="sm" onClick={clearComparison}>
-                      <X className="h-4 w-4 mr-1" />
+                    <ModernButton
+                      onClick={clearComparison}
+                      variant="outline"
+                      size="sm"
+                    >
                       Obriši sve
                     </ModernButton>
                   )}
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 {selectedGroceries.length === 0 ? (
-                  <div className="text-center py-12 text-gray-600">
+                  <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <BarChart3 className="h-8 w-8 text-blue-600" />
+                      <Info className="h-8 w-8 text-blue-600" />
                     </div>
-                    <p className="text-lg font-medium mb-2">Nema namirnica za poređenje</p>
-                    <p className="text-sm">Dodajte namirnice sa leve strane da biste počeli poređenje</p>
+                    <p className="text-gray-600">Dodajte namirnice za uporednu analizu</p>
+                    <p className="text-sm text-gray-500 mt-2">Možete dodati do 5 namirnica</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-gradient-to-r from-blue-50 to-purple-50">
-                          <th className="text-left py-3 px-4 font-semibold text-gray-900">Namirnica</th>
-                          <th className="text-right py-3 px-4 font-semibold text-gray-900">Kalorije</th>
-                          <th className="text-right py-3 px-4 font-semibold text-gray-900">Proteini</th>
-                          <th className="text-right py-3 px-4 font-semibold text-gray-900">Ugljeni hidrati</th>
-                          <th className="text-right py-3 px-4 font-semibold text-gray-900">Masti</th>
-                          <th className="text-right py-3 px-4 font-semibold text-gray-900">Akcija</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedGroceries.map((item, index) => (
-                          <tr 
-                            key={item.id} 
-                            className={`border-b border-gray-200 ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                            } hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-colors duration-200`}
-                          >
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-3">
-                                <span className="font-semibold text-gray-900">{item.name}</span>
-                                <Badge className="text-xs bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-700 border border-blue-200">
-                                  {item.macronutrient}
-                                </Badge>
-                              </div>
-                            </td>
-                            <td className="text-right py-3 px-4 font-semibold text-blue-600">{item.calories} kcal</td>
-                            <td className="text-right py-3 px-4 font-semibold text-green-600">{item.protein}g</td>
-                            <td className="text-right py-3 px-4 font-semibold text-orange-600">{item.carbohydrates}g</td>
-                            <td className="text-right py-3 px-4 font-semibold text-purple-600">{item.fats}g</td>
-                            <td className="text-right py-3 px-4">
-                              <ModernButton
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeFromComparison(item.id)}
-                              >
-                                <X className="h-4 w-4" />
+                  <div className="space-y-4">
+                    {/* Table Header */}
+                    <div className="grid grid-cols-6 gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg font-semibold text-gray-900">
+                      <div>Namirnica</div>
+                      <div className="text-center">Kalorije</div>
+                      <div className="text-center">Proteini</div>
+                      <div className="text-center">Ugljeni hidrati</div>
+                      <div className="text-center">Masti</div>
+                      <div className="text-center">Akcija</div>
+                    </div>
+
+                    {/* Table Rows */}
+                    {selectedGroceries.map((item) => (
+                      <div key={item.id} className="grid grid-cols-6 gap-4 p-4 bg-white/60 backdrop-blur-sm rounded-lg border border-gray-200">
+                        <div className="font-medium text-gray-900">{item.name}</div>
+                        <div className="text-center text-blue-600 font-semibold">{item.calories} kcal</div>
+                        <div className="text-center text-green-600 font-semibold">{item.protein}g</div>
+                        <div className="text-center text-orange-600 font-semibold">{item.carbohydrates}g</div>
+                        <div className="text-center text-red-600 font-semibold">{item.fats}g</div>
+                        <div className="flex items-center justify-center gap-2">
+                          {findArticleForNutrition(item.name) && (
+                            <Link href={createArticleUrl(findArticleForNutrition(item.name)!)}>
+                              <ModernButton variant="outline" size="sm">
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                Pročitaj
                               </ModernButton>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </Link>
+                          )}
+                          <ModernButton
+                            onClick={() => removeFromComparison(item.id)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <X className="h-3 w-3" />
+                          </ModernButton>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

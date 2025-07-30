@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loading } from "@/components/ui/loading";
 import { calculatorData } from "@/lib/calculator-data";
 import { Calculator, Target, TrendingUp, Info, CheckCircle } from "lucide-react";
 
@@ -20,6 +21,7 @@ export default function CalorieCalculator() {
     goal: "maintain",
   });
   const [calories, setCalories] = useState<number | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const activityLevels = [
     { value: "sedentary", label: "Sedentaran (malo ili nema vežbanja)" },
@@ -43,13 +45,18 @@ export default function CalorieCalculator() {
     gain: 1.15, // 15% surplus for weight gain
   };
 
-  const calculateCalories = () => {
+  const calculateCalories = async () => {
     const { age, gender, weight, height, activityLevel, goal } = formData;
     
     if (!age || !weight || !height || !activityLevel) {
       alert("Molimo popunite sva polja");
       return;
     }
+
+    setIsCalculating(true);
+
+    // Simulate calculation delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const ageNum = parseFloat(age);
     const weightNum = parseFloat(weight);
@@ -70,6 +77,7 @@ export default function CalorieCalculator() {
     const targetCalories = tdee * goalMultipliers[goal as keyof typeof goalMultipliers];
 
     setCalories(Math.round(targetCalories));
+    setIsCalculating(false);
   };
 
   const data = calculatorData["kalorije-kalkulator"];
@@ -100,22 +108,20 @@ export default function CalorieCalculator() {
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg flex items-center justify-center">
                   <Target className="h-5 w-5 text-blue-600" />
                 </div>
-                <div>
-                  <CardTitle className="text-gray-900">Unesite vaše podatke</CardTitle>
-                  <CardDescription className="text-gray-600">
-                    Popunite sve podatke za precizno izračunavanje kalorija
-                  </CardDescription>
-                </div>
+                <CardTitle className="text-gray-900">Unesite vaše podatke</CardTitle>
               </div>
+              <CardDescription className="text-gray-600">
+                Popunite sva polja da biste izračunali vaše dnevne kalorije
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Age */}
-              <div className="space-y-3">
-                <Label htmlFor="age" className="text-gray-700 font-medium">Starost (godine)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="age">Godine</Label>
                 <Input
                   id="age"
                   type="number"
-                  placeholder="Unesite vašu starost"
+                  placeholder="Unesite vaše godine"
                   value={formData.age}
                   onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                   className="border-gray-200 focus:border-blue-500 focus:ring-blue-500"
@@ -123,27 +129,27 @@ export default function CalorieCalculator() {
               </div>
 
               {/* Gender */}
-              <div className="space-y-3">
-                <Label className="text-gray-700 font-medium">Pol</Label>
+              <div className="space-y-2">
+                <Label>Pol</Label>
                 <RadioGroup
                   value={formData.gender}
-                  onValueChange={(value: string) => setFormData({ ...formData, gender: value })}
-                  className="flex space-x-6"
+                  onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                  className="flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="male" id="male" className="text-blue-600" />
-                    <Label htmlFor="male" className="text-gray-700">Muški</Label>
+                    <RadioGroupItem value="male" id="male" />
+                    <Label htmlFor="male">Muški</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="female" id="female" className="text-blue-600" />
-                    <Label htmlFor="female" className="text-gray-700">Ženski</Label>
+                    <RadioGroupItem value="female" id="female" />
+                    <Label htmlFor="female">Ženski</Label>
                   </div>
                 </RadioGroup>
               </div>
 
               {/* Weight */}
-              <div className="space-y-3">
-                <Label htmlFor="weight" className="text-gray-700 font-medium">Težina (kg)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="weight">Težina (kg)</Label>
                 <Input
                   id="weight"
                   type="number"
@@ -155,8 +161,8 @@ export default function CalorieCalculator() {
               </div>
 
               {/* Height */}
-              <div className="space-y-3">
-                <Label htmlFor="height" className="text-gray-700 font-medium">Visina (cm)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="height">Visina (cm)</Label>
                 <Input
                   id="height"
                   type="number"
@@ -168,11 +174,11 @@ export default function CalorieCalculator() {
               </div>
 
               {/* Activity Level */}
-              <div className="space-y-3">
-                <Label htmlFor="activity" className="text-gray-700 font-medium">Nivo aktivnosti</Label>
+              <div className="space-y-2">
+                <Label htmlFor="activity">Nivo aktivnosti</Label>
                 <Select
                   value={formData.activityLevel}
-                  onValueChange={(value: string) => setFormData({ ...formData, activityLevel: value })}
+                  onValueChange={(value) => setFormData({ ...formData, activityLevel: value })}
                 >
                   <SelectTrigger className="border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="Izaberite nivo aktivnosti" />
@@ -188,62 +194,66 @@ export default function CalorieCalculator() {
               </div>
 
               {/* Goal */}
-              <div className="space-y-3">
-                <Label className="text-gray-700 font-medium">Vaš cilj</Label>
-                <RadioGroup
+              <div className="space-y-2">
+                <Label htmlFor="goal">Cilj</Label>
+                <Select
                   value={formData.goal}
-                  onValueChange={(value: string) => setFormData({ ...formData, goal: value })}
-                  className="space-y-3"
+                  onValueChange={(value) => setFormData({ ...formData, goal: value })}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="lose" id="lose" className="text-blue-600" />
-                    <Label htmlFor="lose" className="text-gray-700">Gubitak težine</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="maintain" id="maintain" className="text-blue-600" />
-                    <Label htmlFor="maintain" className="text-gray-700">Održavanje težine</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="gain" id="gain" className="text-blue-600" />
-                    <Label htmlFor="gain" className="text-gray-700">Dobijanje težine</Label>
-                  </div>
-                </RadioGroup>
+                  <SelectTrigger className="border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="Izaberite vaš cilj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lose">Gubitak težine</SelectItem>
+                    <SelectItem value="maintain">Održavanje težine</SelectItem>
+                    <SelectItem value="gain">Dobijanje težine</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <ModernButton onClick={calculateCalories} variant="gradient" size="lg" className="w-full">
-                <Calculator className="h-5 w-5 mr-2" />
-                {data.btn}
+              {/* Calculate Button */}
+              <ModernButton
+                onClick={calculateCalories}
+                disabled={isCalculating}
+                className="w-full"
+                variant="gradient"
+                size="lg"
+              >
+                {isCalculating ? (
+                  <div className="flex items-center space-x-2">
+                    <Loading size="sm" variant="spinner" />
+                    <span>Računam...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Calculator className="h-5 w-5" />
+                    <span>Izračunaj kalorije</span>
+                  </div>
+                )}
               </ModernButton>
             </CardContent>
           </Card>
 
           {/* Results */}
           <div className="space-y-6">
-            {/* Calories Result */}
+            {/* Result Card */}
             {calories && (
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200/50">
-                <CardHeader>
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-white" />
+                    <div className="w-10 h-10 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
                     </div>
-                    <div>
-                      <CardTitle className="text-blue-800">
-                        Vaš dnevni kalorijski unos
-                      </CardTitle>
-                    </div>
+                    <CardTitle className="text-gray-900">Vaš rezultat</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                   <div className="text-center space-y-4">
-                    <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      {calories}
+                    <div className="text-4xl font-bold text-blue-600">
+                      {calories.toLocaleString()} kcal
                     </div>
-                    <div className="text-lg font-semibold text-blue-700">
-                      kcal/dan
-                    </div>
-                    <p className="text-sm text-blue-600 mt-2">
-                      Preporučeni dnevni unos kalorija za vaš cilj
+                    <p className="text-gray-600">
+                      Ovo je vaša preporučena dnevna količina kalorija za {formData.goal === 'lose' ? 'gubitak težine' : formData.goal === 'gain' ? 'dobijanje težine' : 'održavanje težine'}.
                     </p>
                   </div>
                 </CardContent>
@@ -252,26 +262,35 @@ export default function CalorieCalculator() {
 
             {/* Information Card */}
             <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-              <CardHeader>
+              <CardHeader className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg flex items-center justify-center">
                     <Info className="h-5 w-5 text-blue-600" />
                   </div>
-                  <div>
-                    <CardTitle className="text-gray-900">Zašto je praćenje kalorija važno?</CardTitle>
-                  </div>
+                  <CardTitle className="text-gray-900">Kako koristiti rezultat</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  {data.ul.map((item, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-600 leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-sm text-gray-600 leading-relaxed">{data.p2}</p>
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-sm text-gray-600">
+                      Pratite svoj unos kalorija kroz dan
+                    </span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-sm text-gray-600">
+                      Podesite prema vašim ciljevima i napretku
+                    </span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-sm text-gray-600">
+                      Konsultujte se sa nutricionistom za personalizovani plan
+                    </span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
